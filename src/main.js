@@ -1,6 +1,6 @@
 javascript:(function(){
-  var keys = ["st_time_1","st_time_2","st_time_3","st_time_4","st_time_5"];
-  var currentKeyIndex = "st_active_preset" || "0";
+  var keys = ["st_t1","st_t2","st_t3","st_t4","st_t5"];
+  var modeKeys = ["st_m1","st_m2","st_m3","st_m4","st_m5"];
   
   if(document.getElementById("st-dock")) return;
   
@@ -8,82 +8,100 @@ javascript:(function(){
   d.id = "st-dock";
   d.title = "Sleep Timer";
   Object.assign(d.style,{
-    position:"fixed",
-    top:"10px",
-    right:"10px",
-    backgroundColor:"rgba(0,0,0,0.85)",
-    color:"#fff",
-    padding:"10px",
-    borderRadius:"6px",
-    zIndex:"999999",
-    fontFamily:"sans-serif",
-    fontSize:"14px",
+    position:"fixed", top:"10px", right:"10px",
+    backgroundColor:"rgba(0,0,0,0.85)", color:"#fff",
+    padding:"10px", borderRadius:"6px", zIndex:"999999",
+    fontFamily:"sans-serif", fontSize:"14px",
     boxShadow:"0 2px 10px rgba(0,0,0,0.3)",
-    display:"flex",
-    alignItems:"center",
-    gap:"8px"
+    display:"flex", alignItems:"center", gap:"8px"
   });
   document.body.appendChild(d);
   
   var timerId = null;
 
   function showInput(){
-    if(timerId){
-      clearTimeout(timerId);
-      timerId = null;
-    }
+    if(timerId){ clearTimeout(timerId); timerId = null; }
     
     var activeIdx = localStorage.getItem("st_active_idx") || "0";
+    var currentMode = localStorage.getItem(modeKeys[activeIdx]) || "time";
     
-    var selectHtml = '<select id="st-select" style="font-size:12px;padding:3px;border-radius:3px;background:#fff;color:#000;">';
+    // プリセットセレクト (アイコン: 🔖)
+    var selectHtml = '<select id="st-select" title="Select Preset" style="font-size:12px;padding:3px;border-radius:3px;background:#fff;color:#000;">';
     for(var i=0; i<keys.length; i++){
-      var defaultVal = (i === 0 ? "23:30" : (i === 1 ? "00:00" : (i === 2 ? "01:00" : (i === 3 ? "02:00" : "06:00"))));
-      var t = localStorage.getItem(keys[i]) || defaultVal;
-      selectHtml += '<option value="'+i+'"'+(i.toString() === activeIdx ? ' selected' : '')+'>#'+(i+1)+' ('+t+')</option>';
+      var mode = localStorage.getItem(modeKeys[i]) || "time";
+      var defVal = (mode === "time" ? "23:30" : "30");
+      var t = localStorage.getItem(keys[i]) || defVal;
+      var label = (mode === "time" ? t : t + "m");
+      selectHtml += '<option value="'+i+'"'+(i.toString() === activeIdx ? ' selected' : '')+'>#'+(i+1)+' ('+label+')</option>';
     }
     selectHtml += '</select>';
     
-    var saved = localStorage.getItem(keys[activeIdx]) || "23:30";
+    // モードセレクト (アイコン: ⏱️ or 🎯)
+    var modeIcon = (currentMode === "time" ? "🎯" : "⏱️");
+    var modeTooltip = (currentMode === "time" ? "Mode: Target Time (Absolute)" : "Mode: Duration (Countdown)");
+    var modeHtml = '<select id="st-mode" title="'+modeTooltip+'" style="font-size:12px;padding:3px;border-radius:3px;background:#fff;color:#000;">' +
+      '<option value="time"'+(currentMode==="time"?' selected':'')+'>🎯 Target</option>' +
+      '<option value="duration"'+(currentMode==="duration"?' selected':'')+'>⏱️ Duration</option>' +
+    '</select>';
     
-    d.innerHTML = selectHtml +
-      '<input type="time" id="st-time" value="'+saved+'" style="font-size:14px;padding:3px;border:none;border-radius:3px;width:80px;background:#fff;color:#000;">' +
-      '<button id="st-start" style="background:#007bff;color:#fff;border:none;padding:4px 10px;border-radius:3px;cursor:pointer;font-size:12px;">Start</button>';
+    var savedVal = localStorage.getItem(keys[activeIdx]) || (currentMode === "time" ? "23:30" : "30");
+    
+    // Picker部分
+    var pickerHtml = '';
+    if(currentMode === "time"){
+      pickerHtml = '<input type="time" id="st-val" title="Target Time" value="'+savedVal+'" style="font-size:14px;padding:3px;border:none;border-radius:3px;width:80px;background:#fff;color:#000;">';
+    } else {
+      pickerHtml = '<input type="number" id="st-val" min="1" max="1440" title="Minutes from now" value="'+savedVal+'" placeholder="min" style="font-size:14px;padding:3px;border:none;border-radius:3px;width:50px;background:#fff;color:#000;"> <span style="font-size:12px;" title="Minutes from now">m</span>';
+    }
+    
+    d.innerHTML = selectHtml + modeHtml + pickerHtml +
+      '<button id="st-start" title="Start Timer" style="background:#007bff;color:#fff;border:none;padding:4px 10px;border-radius:3px;cursor:pointer;font-size:12px;">Start</button>';
     
     var sel = document.getElementById("st-select");
-    var timeInput = document.getElementById("st-time");
+    var modeSel = document.getElementById("st-mode");
     
     sel.onchange = function(){
       localStorage.setItem("st_active_idx", sel.value);
-      var val = localStorage.getItem(keys[sel.value]) || (sel.value === "0" ? "23:30" : "00:00");
-      timeInput.value = val;
+      showInput();
     };
     
-    timeInput.onchange = function(){
+    modeSel.onchange = function(){
       var idx = sel.value;
-      localStorage.setItem(keys[idx], timeInput.value);
-      // セレクトボックスの表示も更新
-      sel.options[idx].text = '#' + (parseInt(idx)+1) + ' (' + timeInput.value + ')';
+      var newMode = modeSel.value;
+      localStorage.setItem(modeKeys[idx], newMode);
+      var defaultVal = (newMode === "time" ? "23:30" : "30");
+      localStorage.setItem(keys[idx], defaultVal);
+      showInput();
     };
 
     document.getElementById("st-start").onclick = function(){
       var idx = sel.value;
-      var val = timeInput.value;
+      var mode = modeSel.value;
+      var val = document.getElementById("st-val").value;
       if(!val) return;
+      
       localStorage.setItem("st_active_idx", idx);
+      localStorage.setItem(modeKeys[idx], mode);
       localStorage.setItem(keys[idx], val);
-      startTimer(val);
+      
+      startTimer(mode, val);
     };
   }
 
-  function startTimer(timeStr){
-    var match = timeStr.match(/^(\d{2}):(\d{2})$/);
-    if(!match) return;
-    var h = parseInt(match[1],10);
-    var m = parseInt(match[2],10);
+  function startTimer(mode, val){
     var target = new Date();
-    target.setHours(h,m,0,0);
-    if(target <= new Date()){
-      target.setDate(target.getDate()+1);
+    
+    if(mode === "time"){
+      var match = val.match(/^(\d{2}):(\d{2})$/);
+      if(!match) return;
+      target.setHours(parseInt(match[1],10), parseInt(match[2],10), 0, 0);
+      if(target <= new Date()){
+        target.setDate(target.getDate()+1);
+      }
+    } else {
+      var minutes = parseInt(val, 10);
+      if(isNaN(minutes) || minutes <= 0) return;
+      target.setTime(target.getTime() + minutes * 60000);
     }
     
     function update(){
@@ -94,7 +112,9 @@ javascript:(function(){
         return;
       }
       var remainMin = Math.ceil(diff/60000);
-      d.innerHTML = '<span style="font-weight:bold;">⏳ ' + remainMin + ' min left</span> <span style="font-size:11px;color:#ccc;">('+timeStr+')</span><button id="st-stop" style="background:#dc3545;color:#fff;border:none;padding:3px 8px;border-radius:3px;cursor:pointer;font-size:11px;">Change</button>';
+      var displayLabel = (mode === "time" ? val : val + "m");
+      
+      d.innerHTML = '<span style="font-weight:bold;" title="Remaining time">⏳ ' + remainMin + ' min left</span> <span style="font-size:11px;color:#ccc;" title="Preset value">('+displayLabel+')</span><button id="st-stop" title="Change settings" style="background:#dc3545;color:#fff;border:none;padding:3px 8px;border-radius:3px;cursor:pointer;font-size:11px;">Change</button>';
       document.getElementById("st-stop").onclick = showInput;
       timerId = setTimeout(update, 60000 - ((new Date()) % 60000));
     }
