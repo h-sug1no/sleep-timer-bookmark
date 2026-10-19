@@ -1,6 +1,26 @@
-# sleep-timer-bookmark
-simple sleep timer bookmark
+# 🌙 Sleep Timer Bookmarklet
+A lightweight, fully customizable bookmarklet that acts as a sleep timer for your browser. It automatically redirects the current tab to about:blank when the specified time is reached.
 
+## ✨ Key Features
+- Dual Modes:
+
+  - 🎯 Target Time: Set an absolute time (e.g., 23:30) to trigger the sleep action.
+  - ⏱️ Duration: Set a countdown timer in minutes (1-minute precision) from the current time.
+
+- 5 Independent Presets: Save and switch between up to 5 custom presets. Each preset independently remembers its own mode (Target or Duration) and time value—giving you 10 practical configurations at your fingertips.
+
+- Sleek UI & Tooltips: Designed with clean English labels and intuitive icons (🎯, ⏱️, ⏳) to keep your browser bar clutter-free. Hover over any element to view detailed tooltips.
+
+- Persistent Settings: Automatically saves your preferences using browser localStorage.
+
+- Live Countdown: Displays real-time remaining minutes while running, with a quick Change button if you need to adjust or cancel on the fly.
+
+## 🚀 How to Use
+- Create a new bookmark in your browser.
+
+- Paste the provided javascript:(...) code into the URL field.
+
+- Click the bookmark on any webpage to open the timer dock, choose your preset and mode, and click Start.
 
 Use the text content of the Gist below as a bookmarklet.
 
