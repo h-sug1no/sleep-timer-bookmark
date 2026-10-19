@@ -25,7 +25,7 @@ javascript:(function(){
     var activeIdx = localStorage.getItem("st_active_idx") || "0";
     var currentMode = localStorage.getItem(modeKeys[activeIdx]) || "time";
     
-    // プリセットセレクト (アイコン: 🔖)
+    // Preset select
     var selectHtml = '<select id="st-select" title="Select Preset" style="font-size:12px;padding:3px;border-radius:3px;background:#fff;color:#000;">';
     for(var i=0; i<keys.length; i++){
       var mode = localStorage.getItem(modeKeys[i]) || "time";
@@ -36,8 +36,7 @@ javascript:(function(){
     }
     selectHtml += '</select>';
     
-    // モードセレクト (アイコン: ⏱️ or 🎯)
-    var modeIcon = (currentMode === "time" ? "🎯" : "⏱️");
+    // Mode select
     var modeTooltip = (currentMode === "time" ? "Mode: Target Time (Absolute)" : "Mode: Duration (Countdown)");
     var modeHtml = '<select id="st-mode" title="'+modeTooltip+'" style="font-size:12px;padding:3px;border-radius:3px;background:#fff;color:#000;">' +
       '<option value="time"'+(currentMode==="time"?' selected':'')+'>🎯 Target</option>' +
@@ -46,7 +45,7 @@ javascript:(function(){
     
     var savedVal = localStorage.getItem(keys[activeIdx]) || (currentMode === "time" ? "23:30" : "30");
     
-    // Picker部分
+    // Picker (共通のid="st-val"に統一)
     var pickerHtml = '';
     if(currentMode === "time"){
       pickerHtml = '<input type="time" id="st-val" title="Target Time" value="'+savedVal+'" style="font-size:14px;padding:3px;border:none;border-radius:3px;width:80px;background:#fff;color:#000;">';
